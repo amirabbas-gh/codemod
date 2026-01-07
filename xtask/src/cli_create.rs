@@ -3,28 +3,19 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 pub async fn create_codemod(target_dir: Option<PathBuf>) -> Result<()> {
-    // Find the codemod binary
+    // Get the workspace root
     let xtask_path = std::env::var("CARGO_MANIFEST_DIR")
         .map_err(|_| anyhow::anyhow!("Cannot find CARGO_MANIFEST_DIR"))?;
 
     let workspace_root = Path::new(&xtask_path).parent().unwrap();
 
-    // Try to find the binary in target/debug or target/release
-    let debug_binary = workspace_root.join("target/debug/codemod");
-    let release_binary = workspace_root.join("target/release/codemod");
-
-    let binary_path = if release_binary.exists() {
-        release_binary
-    } else if debug_binary.exists() {
-        debug_binary
-    } else {
-        return Err(anyhow::anyhow!(
-            "codemod binary not found. Please build it first with 'cargo build' or 'cargo build --release'"
-        ));
-    };
-
-    // Execute codemod init with the specified arguments
-    let mut cmd = Command::new(binary_path);
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run")
+        .arg("--bin")
+        .arg("codemod")
+        .arg("--manifest-path")
+        .arg(workspace_root.join("Cargo.toml"))
+        .arg("--");
     cmd.arg("init");
 
     // If target_dir is specified, use it as the path and set it as current_dir
