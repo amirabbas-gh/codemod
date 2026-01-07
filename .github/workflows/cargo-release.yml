@@ -362,7 +362,7 @@ jobs:
           repository: amirabbas-gh/migrate-template
           path: migrations-template
           fetch-depth: 1
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.MIGRATIONS_TEMPLATE_TOKEN }}
 
       - name: Remove all files except .git
         working-directory: migrations-template
@@ -381,17 +381,13 @@ jobs:
           echo "Version: $VERSION"
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           path: migrations-template
           commit-message: "chore: Sync with codemod CLI v${{ steps.version.outputs.version }}"
-          committer: Codemod GitHub App <Amirabbas Ghasemi@amirabbas08dev@gmail.com>
-          author: Codemod GitHub App <Amirabbas Ghasemi@amirabbas08dev@gmail.com>
           title: "Sync with codemod CLI v${{ steps.version.outputs.version }}"
           body: |
             This PR synchronizes the migrations-template repository with the latest codemod CLI release (v${{ steps.version.outputs.version }}).
-            
             Changes include:
             - Updated template files from codemod CLI
             - Synchronized with release tag: ${{ github.ref_name }}
