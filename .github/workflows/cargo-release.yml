@@ -390,7 +390,7 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           path: migrations-template
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.MIGRATIONS_REPO_TOKEN }}
           commit-message: "chore: Sync with codemod CLI v${{ steps.version.outputs.version }}"
           committer: Codemod Bot <codemod[bot]@users.noreply.github.com>
           author: Codemod Bot <codemod[bot]@users.noreply.github.com>
