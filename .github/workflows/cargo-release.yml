@@ -359,7 +359,7 @@ jobs:
       - name: Checkout migrations-template repo
         uses: actions/checkout@v4
         with:
-          repository: codemod/migrations-template
+          repository: amirabbas-gh/migrate-template
           path: migrations-template
           fetch-depth: 1
           token: ${{ secrets.GITHUB_TOKEN }}
