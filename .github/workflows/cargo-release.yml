@@ -369,9 +369,15 @@ jobs:
         run: |
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
 
-      - name: Run xtask cli-create
+      # - name: Run xtask cli-create
+      #   run: |
+      #     cargo run --release --bin xtask -- cli-create ${{ github.workspace }}/migrations-template
+
+      - name: Configure Git for commits
+        working-directory: migrations-template
         run: |
-          cargo run --release --bin xtask -- cli-create ${{ github.workspace }}/migrations-template
+          git config user.email "codemod[bot]@users.noreply.github.com"
+          git config user.name "Codemod Bot"
 
       - name: Extract version from tag
         id: version
@@ -384,7 +390,10 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           path: migrations-template
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: Sync with codemod CLI v${{ steps.version.outputs.version }}"
+          committer: Codemod Bot <codemod[bot]@users.noreply.github.com>
+          author: Codemod Bot <codemod[bot]@users.noreply.github.com>
           title: "Sync with codemod CLI v${{ steps.version.outputs.version }}"
           body: |
             This PR synchronizes the migrations-template repository with the latest codemod CLI release (v${{ steps.version.outputs.version }}).
