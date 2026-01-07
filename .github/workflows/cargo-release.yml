@@ -369,9 +369,9 @@ jobs:
         run: |
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
 
-      # - name: Run xtask cli-create
-      #   run: |
-      #     cargo run --release --bin xtask -- cli-create ${{ github.workspace }}/migrations-template
+      - name: Run xtask cli-create
+        run: |
+          cargo run --release --bin xtask -- cli-create ${{ github.workspace }}/migrations-template
 
       - name: Configure Git for commits
         working-directory: migrations-template
