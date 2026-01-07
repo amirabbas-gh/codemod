@@ -362,7 +362,7 @@ jobs:
           repository: amirabbas-gh/migrate-template
           path: migrations-template
           fetch-depth: 1
-          token: ${{ secrets.MIGRATIONS_TEMPLATE_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Remove all files except .git
         working-directory: migrations-template
