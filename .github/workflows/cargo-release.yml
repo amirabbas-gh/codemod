@@ -17,141 +17,141 @@ permissions:
   pull-requests: write
 
 jobs:
-  # build:
-  #   name: Build Release
-  #   runs-on: ${{ matrix.os }}
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - os: ubuntu-22.04
-  #           target: x86_64-unknown-linux-gnu
-  #           binary_name: codemod-linux-x86_64-gnu
-  #         - os: ubuntu-22.04-arm
-  #           target: aarch64-unknown-linux-gnu
-  #           binary_name: codemod-linux-aarch64-gnu
-  #         - os: macos-latest
-  #           target: aarch64-apple-darwin
-  #           binary_name: codemod-darwin-aarch64
-  #         - os: macos-latest
-  #           target: x86_64-apple-darwin
-  #           binary_name: codemod-darwin-x86_64
-  #         - os: windows-latest
-  #           target: x86_64-pc-windows-msvc
-  #           binary_name: codemod-windows-x86_64.exe
+  build:
+    name: Build Release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            binary_name: codemod-linux-x86_64-gnu
+          - os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            binary_name: codemod-linux-aarch64-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            binary_name: codemod-darwin-aarch64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            binary_name: codemod-darwin-x86_64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary_name: codemod-windows-x86_64.exe
 
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         submodules: recursive
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-  #     - name: Install Rust
-  #       uses: dtolnay/rust-toolchain@stable
-  #       with:
-  #         toolchain: 1.89.0
-  #         components: rustfmt, clippy
-  #         targets: ${{ matrix.target }}
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.89.0
+          components: rustfmt, clippy
+          targets: ${{ matrix.target }}
 
-  #     - name: Get Binary Path
-  #       id: binary_path
-  #       shell: bash
-  #       run: |
-  #         if [ "${{ matrix.os }}" == "windows-latest" ]; then
-  #           echo "path=target/${{ matrix.target }}/release/codemod.exe" >> "$GITHUB_OUTPUT"
-  #           exit 0
-  #         fi
-  #         echo "path=target/${{ matrix.target }}/release/codemod" >> "$GITHUB_OUTPUT"
+      - name: Get Binary Path
+        id: binary_path
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            echo "path=target/${{ matrix.target }}/release/codemod.exe" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "path=target/${{ matrix.target }}/release/codemod" >> "$GITHUB_OUTPUT"
 
-  #     - name: Cache Cargo
-  #       uses: Swatinem/rust-cache@v2
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
 
-  #     - name: Install dependencies (Linux only)
-  #       if: matrix.os == 'ubuntu-22.04' || (matrix.os == 'self-hosted' && matrix.target == 'aarch64-unknown-linux-gnu')
-  #       run: |
-  #         sudo apt-get update
-  #         sudo apt-get install -y pkg-config build-essential libssl-dev
+      - name: Install dependencies (Linux only)
+        if: matrix.os == 'ubuntu-22.04' || (matrix.os == 'self-hosted' && matrix.target == 'aarch64-unknown-linux-gnu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config build-essential libssl-dev
 
-  #     - name: Install GNU coreutils (macOS only)
-  #       if: matrix.os == 'macos-latest'
-  #       run: brew install coreutils
+      - name: Install GNU coreutils (macOS only)
+        if: matrix.os == 'macos-latest'
+        run: brew install coreutils
 
-  #     - name: Import Code Signing Certificate (macOS only)
-  #       if: matrix.os == 'macos-latest'
-  #       uses: apple-actions/import-codesign-certs@v3
-  #       with:
-  #         p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-  #         p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      - name: Import Code Signing Certificate (macOS only)
+        if: matrix.os == 'macos-latest'
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
 
-  #     - name: Build
-  #       run: |
-  #         cargo build --release -p codemod --target ${{ matrix.target }}
-  #       env:
-  #         POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+      - name: Build
+        run: |
+          cargo build --release -p codemod --target ${{ matrix.target }}
+        env:
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
 
-  #     - name: Chmod binary
-  #       run: |
-  #         chmod 755 ${{ steps.binary_path.outputs.path }}
+      - name: Chmod binary
+        run: |
+          chmod 755 ${{ steps.binary_path.outputs.path }}
 
-  #     - name: Sign Binary (macOS only)
-  #       if: matrix.os == 'macos-latest'
-  #       env:
-  #         APPLE_IDENTITY: ${{ secrets.APPLE_IDENTITY }}
-  #         APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-  #       run: |
-  #         # Set timeout for codesign (5 minutes)
-  #         timeout 300 codesign \
-  #           --force \
-  #           --timestamp \
-  #           --sign "$APPLE_IDENTITY" \
-  #           --team-id "$APPLE_TEAM_ID" \
-  #           --options runtime \
-  #           --verbose \
-  #           ${{ steps.binary_path.outputs.path }}
+      - name: Sign Binary (macOS only)
+        if: matrix.os == 'macos-latest'
+        env:
+          APPLE_IDENTITY: ${{ secrets.APPLE_IDENTITY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Set timeout for codesign (5 minutes)
+          timeout 300 codesign \
+            --force \
+            --timestamp \
+            --sign "$APPLE_IDENTITY" \
+            --team-id "$APPLE_TEAM_ID" \
+            --options runtime \
+            --verbose \
+            ${{ steps.binary_path.outputs.path }}
 
-  #     - name: Verify Signing (macOS only)
-  #       if: matrix.os == 'macos-latest'
-  #       run: |
-  #         codesign --verify --deep --verbose=4 ${{ steps.binary_path.outputs.path }}
+      - name: Verify Signing (macOS only)
+        if: matrix.os == 'macos-latest'
+        run: |
+          codesign --verify --deep --verbose=4 ${{ steps.binary_path.outputs.path }}
 
-  #     - name: Create ZIP for Notarization (macOS only)
-  #       if: matrix.os == 'macos-latest'
-  #       run: zip -r binary.zip ${{ steps.binary_path.outputs.path }}
+      - name: Create ZIP for Notarization (macOS only)
+        if: matrix.os == 'macos-latest'
+        run: zip -r binary.zip ${{ steps.binary_path.outputs.path }}
 
-  #     - name: Submit for Notarization (macOS only)
-  #       if: matrix.os == 'macos-latest'
-  #       env:
-  #         APPLE_ID: ${{ secrets.APPLE_ID }}
-  #         APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-  #         APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-  #       run: |
-  #         # Set timeout for notarization (15 minutes)
-  #         timeout 900 xcrun notarytool submit binary.zip \
-  #           --apple-id "$APPLE_ID" \
-  #           --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-  #           --team-id "$APPLE_TEAM_ID" \
-  #           --wait \
-  #           --verbose
+      - name: Submit for Notarization (macOS only)
+        if: matrix.os == 'macos-latest'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Set timeout for notarization (15 minutes)
+          timeout 900 xcrun notarytool submit binary.zip \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait \
+            --verbose
 
-  #     # - name: Staple Notarization (macOS only)
-  #     #   if: matrix.os == 'macos-latest'
-  #     #   run: xcrun stapler staple -v ${{ steps.binary_path.outputs.path }}
+      # - name: Staple Notarization (macOS only)
+      #   if: matrix.os == 'macos-latest'
+      #   run: xcrun stapler staple -v ${{ steps.binary_path.outputs.path }}
 
-  #     - name: Rename binary (Non-Windows)
-  #       if: matrix.os != 'windows-latest'
-  #       run: |
-  #         cd target/${{ matrix.target }}/release
-  #         mv codemod ${{ matrix.binary_name }}
+      - name: Rename binary (Non-Windows)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd target/${{ matrix.target }}/release
+          mv codemod ${{ matrix.binary_name }}
 
-  #     - name: Rename binary (Windows)
-  #       if: matrix.os == 'windows-latest'
-  #       run: |
-  #         cd target/${{ matrix.target }}/release
-  #         mv codemod.exe ${{ matrix.binary_name }}
+      - name: Rename binary (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd target/${{ matrix.target }}/release
+          mv codemod.exe ${{ matrix.binary_name }}
 
-  #     - name: Upload artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: ${{ matrix.target }}
-  #         path: target/${{ matrix.target }}/release/${{ matrix.binary_name }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/${{ matrix.binary_name }}
 
   # changelog:
   #   name: Generate Changelog
@@ -335,7 +335,7 @@ jobs:
 
   sync_migrations_template:
     name: Synchronize Migrations Template
-    # needs: [build]
+    needs: [build]
     runs-on: ubuntu-22.04
     # if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     permissions:
@@ -347,14 +347,16 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Download codemod binary
+        uses: actions/download-artifact@v4
         with:
-          toolchain: 1.89.0
-          components: rustfmt, clippy
+          name: x86_64-unknown-linux-gnu
+          path: .
 
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
+      - name: Make binary executable
+        run: |
+          chmod +x codemod-linux-x86_64-gnu
+          mv codemod-linux-x86_64-gnu codemod
 
       - name: Checkout migrations-template repo
         uses: actions/checkout@v4
@@ -369,9 +371,21 @@ jobs:
         run: |
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
 
-      - name: Run xtask cli-create
+      - name: Run codemod init
         run: |
-          cargo run --release --bin xtask -- cli-create ${{ github.workspace }}/migrations-template
+          ${{ github.workspace }}/codemod init . \
+            --name my-codemod \
+            --project-type ast-grep-js \
+            --package-manager npm \
+            --language js \
+            --author Codemod \
+            --description "migrations template" \
+            --license MIT \
+            --workspace \
+            --github-action \
+            --no-interactive \
+            --force
+        working-directory: migrations-template
 
       - name: Configure Git for commits
         working-directory: migrations-template
