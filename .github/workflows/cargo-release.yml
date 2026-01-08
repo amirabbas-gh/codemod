@@ -22,22 +22,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        include:
-          - os: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-            binary_name: codemod-linux-x86_64-gnu
-          - os: ubuntu-22.04-arm
-            target: aarch64-unknown-linux-gnu
-            binary_name: codemod-linux-aarch64-gnu
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            binary_name: codemod-darwin-aarch64
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            binary_name: codemod-darwin-x86_64
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            binary_name: codemod-windows-x86_64.exe
+          include:
+            - os: ubuntu-22.04
+              target: x86_64-unknown-linux-gnu
+              binary_name: codemod-linux-x86_64-gnu
+            - os: ubuntu-22.04-arm
+              target: aarch64-unknown-linux-gnu
+              binary_name: codemod-linux-aarch64-gnu
+            - os: windows-latest
+              target: x86_64-pc-windows-msvc
+              binary_name: codemod-windows-x86_64.exe
 
     steps:
       - uses: actions/checkout@v4
@@ -70,70 +64,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y pkg-config build-essential libssl-dev
 
-      - name: Install GNU coreutils (macOS only)
-        if: matrix.os == 'macos-latest'
-        run: brew install coreutils
-
-      - name: Import Code Signing Certificate (macOS only)
-        if: matrix.os == 'macos-latest'
-        uses: apple-actions/import-codesign-certs@v3
-        with:
-          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-
       - name: Build
         run: |
           cargo build --release -p codemod --target ${{ matrix.target }}
-        env:
-          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+        # env:
+        #   POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
 
       - name: Chmod binary
         run: |
           chmod 755 ${{ steps.binary_path.outputs.path }}
-
-      - name: Sign Binary (macOS only)
-        if: matrix.os == 'macos-latest'
-        env:
-          APPLE_IDENTITY: ${{ secrets.APPLE_IDENTITY }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          # Set timeout for codesign (5 minutes)
-          timeout 300 codesign \
-            --force \
-            --timestamp \
-            --sign "$APPLE_IDENTITY" \
-            --team-id "$APPLE_TEAM_ID" \
-            --options runtime \
-            --verbose \
-            ${{ steps.binary_path.outputs.path }}
-
-      - name: Verify Signing (macOS only)
-        if: matrix.os == 'macos-latest'
-        run: |
-          codesign --verify --deep --verbose=4 ${{ steps.binary_path.outputs.path }}
-
-      - name: Create ZIP for Notarization (macOS only)
-        if: matrix.os == 'macos-latest'
-        run: zip -r binary.zip ${{ steps.binary_path.outputs.path }}
-
-      - name: Submit for Notarization (macOS only)
-        if: matrix.os == 'macos-latest'
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          # Set timeout for notarization (15 minutes)
-          timeout 900 xcrun notarytool submit binary.zip \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --wait \
-            --verbose
-
-      # - name: Staple Notarization (macOS only)
-      #   if: matrix.os == 'macos-latest'
-      #   run: xcrun stapler staple -v ${{ steps.binary_path.outputs.path }}
 
       - name: Rename binary (Non-Windows)
         if: matrix.os != 'windows-latest'
